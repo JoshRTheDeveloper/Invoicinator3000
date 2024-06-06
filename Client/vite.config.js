@@ -6,6 +6,7 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({ // Add the Vite PWA plugin
+      injectRegister: 'null',
       manifest: {
         // Update your manifest options here
         name: 'Invoicinator',
