@@ -4,7 +4,8 @@
   "description": "",
   "main": "Server/server.js",
   "engines": {
-    "node": "v20.11.0"
+    "node": "v20.11.0",
+    "npm": "10.8.1"
   },
   "scripts": {
     "start": "node Server/server.js --ignore Client",
