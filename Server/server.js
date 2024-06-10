@@ -18,7 +18,7 @@ const server = new ApolloServer({
   context: authMiddleware
 });
 
-console.log('__dirname:', __dirname);
+
 
 const startApolloServer = async () => {
   await server.start();
@@ -53,9 +53,10 @@ const startApolloServer = async () => {
 
   app.post('/send-invoice', async (req, res) => {
     const invoiceDetails = req.body;
+    const user = req.user;
 
     try {
-      await sendInvoiceEmail(invoiceDetails);
+      await sendInvoiceEmail(invoiceDetails, user);
       res.status(200).send({ message: 'Email sent successfully' });
     } catch (error) {
       console.error('Error sending email:', error);

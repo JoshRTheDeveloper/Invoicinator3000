@@ -32,7 +32,7 @@ const CreateInvoices = () => {
   const token = localStorage.getItem('authToken');
   const decodedToken = jwtDecode(token);
   const userId = decodedToken.data._id;
- 
+  
 
   const { loading, error, data } = useQuery(GET_USER, {
     variables: { userId: userId || '' },
@@ -88,6 +88,7 @@ const CreateInvoices = () => {
         dueDate: dueDateISO,
         userID: userId,
         invoice_details: invoiceDetails,
+        profilePicture: profilePicture,
     };
 
     try {
