@@ -7,6 +7,7 @@ const { upload } = require('./utils/cloudinary');
 const { typeDefs, resolvers } = require('./schemas');
 const db = require('./config/connection');
 const cors = require('cors');
+const sendInvoiceEmail = require('./utils/sendInvoiceEmail');
 require('dotenv').config();
 
 const PORT = process.env.PORT || 3001;
@@ -27,14 +28,14 @@ const startApolloServer = async () => {
   }));
   app.use(express.urlencoded({ extended: false }));
   app.use(express.json());
-  
+
   app.post('/upload', upload.single('file'), (req, res) => {
     const file = req.file;
     if (!file) {
       return res.status(400).send('No file uploaded.');
     }
 
-    const fileUrl = file.path; // Cloudinary URL
+    const fileUrl = file.path;
 
     res.send({ fileUrl });
   });
@@ -50,14 +51,26 @@ const startApolloServer = async () => {
     context: authMiddleware
   }));
 
+  app.post('/send-invoice', async (req, res) => {
+    const invoiceDetails = req.body;
+
+    try {
+      await sendInvoiceEmail(invoiceDetails);
+      res.status(200).send({ message: 'Email sent successfully' });
+    } catch (error) {
+      console.error('Error sending email:', error);
+      res.status(500).send({ message: 'Error sending email' });
+    }
+  });
+
   if (process.env.NODE_ENV === 'production') {
-    // Serve static files from the React app (Vite build output)
+   
     app.use(express.static(path.join(__dirname, '../Client/dist')));
     
-    // Serve assets from the dist/assets directory
+  
     app.use('/assets', express.static(path.join(__dirname, '../Client/dist/assets')));
 
-    // For all other routes, serve the index.html file
+  
     app.get('*', (req, res) => {
       res.sendFile(path.join(__dirname, '../Client/dist/index.html'));
     });
