@@ -7,6 +7,7 @@ import { useQuery, useMutation } from '@apollo/client';
 import Auth from "../utils/auth";
 import { GET_USER } from '../utils/queries';
 import { CREATE_INVOICE } from '../utils/mutations';
+import axios from 'axios';
 
 const CreateInvoices = () => {
   const [userData, setUserData] = useState(null);
@@ -91,6 +92,8 @@ const CreateInvoices = () => {
 
     try {
         const response = await createInvoice({ variables });
+
+        await axios.post('http://localhost:3001/send-invoice', variables);
 
         // Reset form fields
         setInvoiceAmount('');

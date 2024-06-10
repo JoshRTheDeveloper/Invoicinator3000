@@ -6,7 +6,6 @@ import jwtDecode from 'jwt-decode';
 import { GET_USER } from '../utils/queries';
 import { UPDATE_INVOICE, DELETE_INVOICE } from '../utils/mutations';
 import InvoiceModal from '../components/invoice-modal/invoice-modal';
-import { getInvoices, saveInvoices } from '../utils/indexedDB';
 
 const Home = () => {
   const token = localStorage.getItem('authToken');
@@ -15,9 +14,6 @@ const Home = () => {
 
   const { loading: userLoading, error: userError, data: userData, refetch } = useQuery(GET_USER, {
     variables: { userId: userId || '' },
-    onCompleted: async (data) => {
-      await saveInvoices(data.getUser.invoices);
-    },
   });
 
   const [markAsPaidMutation] = useMutation(UPDATE_INVOICE);
@@ -28,36 +24,10 @@ const Home = () => {
   const [searchError, setSearchError] = useState(null);
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isOffline, setIsOffline] = useState(!navigator.onLine);
 
   useEffect(() => {
-    const handleOnline = () => {
-      setIsOffline(false);
-      refetch();
-    };
-
-    const handleOffline = () => {
-      setIsOffline(true);
-    };
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
+    refetch();
   }, []);
-
-  useEffect(() => {
-    if (isOffline) {
-      const loadOfflineData = async () => {
-        const offlineInvoices = await getInvoices();
-        setSearchResult(offlineInvoices);
-      };
-      loadOfflineData();
-    }
-  }, [isOffline]);
 
   const handleSearch = async () => {
     try {
@@ -78,6 +48,7 @@ const Home = () => {
   };
 
   const handleInvoiceClick = (invoice) => {
+   
     setSelectedInvoice(invoice);
     setIsModalOpen(true);
   };
@@ -139,25 +110,7 @@ const Home = () => {
         paidStatus: true,
       },
       update: (cache, { data: { updateInvoice } }) => {
-        const existingUser = cache.readQuery({
-          query: GET_USER,
-          variables: { userId: userId || '' },
-        });
-
-        cache.writeQuery({
-          query: GET_USER,
-          data: {
-            getUser: {
-              ...existingUser.getUser,
-              invoices: existingUser.getUser.invoices.map((invoice) =>
-                invoice._id === invoiceId ? { ...invoice, paidStatus: true } : invoice
-              ),
-            },
-          },
-          variables: { userId: userId || '' },
-        });
-
-        refetch();
+       
       },
     });
   };
@@ -170,7 +123,9 @@ const Home = () => {
     <>
       <div className="app">
         <Sidebar />
-        <div className="main-content"></div>
+        <div className="main-content">
+       
+        </div>
       </div>
 
       <div className='search-bar-div'>
@@ -191,7 +146,7 @@ const Home = () => {
       ) : searchError ? (
         <p>Error: {searchError.message}</p>
       ) : searchResult.length === 0 ? (
-        <p>No results found.</p>
+        <p></p>
       ) : (
         <div className='search-results'>
           <h3>Search Results</h3>
@@ -208,9 +163,7 @@ const Home = () => {
                   <p>Paid Status: {invoice.paidStatus ? 'Paid' : 'Not Paid'}</p>
                 </div>
                 <div className='mark-button'>
-                  {!invoice.paidStatus && (
-                    <button onClick={(e) => { e.stopPropagation(); markAsPaid(invoice._id); }}>Mark as Paid</button>
-                  )}
+                  {!invoice.paidStatus && <button onClick={(e) => { e.stopPropagation(); markAsPaid(invoice._id); }}>Mark as Paid</button>}
                   <button onClick={(e) => { e.stopPropagation(); handleDeleteInvoice(invoice._id); }}>Delete</button>
                 </div>
               </li>
@@ -275,17 +228,7 @@ const Home = () => {
       </div>
 
       {isModalOpen && (
-        <InvoiceModal
-          invoice={selectedInvoice}
-          onClose={closeModal}
-          onSave={(updatedInvoice) => {
-            setSearchResult(prevSearchResult =>
-              prevSearchResult.map(invoice =>
-                invoice._id === updatedInvoice._id ? updatedInvoice : invoice
-              )
-            );
-          }}
-        />
+        <InvoiceModal invoice={selectedInvoice} onClose={closeModal} />
       )}
     </>
   );
